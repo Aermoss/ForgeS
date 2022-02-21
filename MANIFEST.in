@@ -1,0 +1,5 @@
+include forges/assets/icon/*
+include forges/assets/logo/*
+include forges/assets/fonts/roboto/*
+include forges/prefabs/*
+include forges/scripts/*

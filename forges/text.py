@@ -1,9 +1,9 @@
-import sdl2
-import sdl2.sdlttf
+import sdl2, sdl2.sdlttf
 
 import ctypes
 
 from forges.color import Color
+from forges.math import Vector2
 
 import __main__
 
@@ -106,6 +106,12 @@ class Text:
         dst.w, dst.h = self.width, self.height
 
         return self.height
+
+    def set_pos(self, vector2):
+        self.x, self.y = vector2.x, vector2.y
+
+    def get_pos(self):
+        return Vector2(self.x, self.y)
 
     def get_x(self):
         return self.x

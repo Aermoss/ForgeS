@@ -1,8 +1,6 @@
-import sdl2
-import sdl2.ext
+import sdl2, sdl2.ext
 
-import os
-import time
+import os, ctypes, time
 
 from forges.input import Input
 from forges.color import Color
@@ -10,7 +8,7 @@ from forges.color import Color
 import __main__
 
 class Window:
-    def __init__(self, width = 1200, height = 600, vsync = True, background_color = Color(255, 255, 255, 255)):
+    def __init__(self, width = 1200, height = 600, vsync = True, fullscreen = False, always_on_top = False, background_color = Color(255, 255, 255, 255)):
         if hasattr(__main__.forges, "forges"):
             self.engine = __main__.forges.forges
 
@@ -19,24 +17,40 @@ class Window:
 
         self.engine.set_window(self)
 
+        self.user32 = ctypes.windll.user32
+        self.monitor_width,self.monitor_height = self.user32.GetSystemMetrics(0), self.user32.GetSystemMetrics(1)
+
         self.width = width
         self.height = height
         self.vsync = vsync
+        self.fullscreen = fullscreen
         self.background_color = background_color
+        self.always_on_top = always_on_top
 
         self.start_time = time.time()
         self.destroyed = False
+        self.enabled = True
         self.functions = {}
+        self.scripts = []
 
         sdl2.SDL_Init(sdl2.SDL_INIT_EVERYTHING)
 
-        self.window = sdl2.SDL_CreateWindow("Forge S".encode(), sdl2.SDL_WINDOWPOS_CENTERED, sdl2.SDL_WINDOWPOS_CENTERED, self.width, self.height, sdl2.SDL_WINDOW_SHOWN)
+        window_flags = sdl2.SDL_WINDOW_SHOWN
+
+        if self.fullscreen:
+            window_flags |= sdl2.SDL_WINDOW_FULLSCREEN
+
+        if self.always_on_top:
+            window_flags |= sdl2.SDL_WINDOW_ALWAYS_ON_TOP
+
+        self.window = sdl2.SDL_CreateWindow("Forge S".encode(), sdl2.SDL_WINDOWPOS_CENTERED, sdl2.SDL_WINDOWPOS_CENTERED, self.width, self.height, window_flags)
+
+        renderer_flags = 0
         
         if self.vsync:
-            self.renderer = sdl2.SDL_CreateRenderer(self.window, -1, sdl2.SDL_RENDERER_ACCELERATED | sdl2.SDL_RENDERER_PRESENTVSYNC)
-
-        else:
-            self.renderer = sdl2.SDL_CreateRenderer(self.window, -1, 0)
+            renderer_flags = sdl2.SDL_RENDERER_ACCELERATED | sdl2.SDL_RENDERER_PRESENTVSYNC
+            
+        self.renderer = sdl2.SDL_CreateRenderer(self.window, -1, renderer_flags)
 
         sdl2.SDL_SetRenderDrawBlendMode(self.renderer, sdl2.SDL_BLENDMODE_BLEND)
 
@@ -46,7 +60,7 @@ class Window:
         icon = sdl2.ext.load_image(icon)
         sdl2.SDL_SetWindowIcon(self.window, icon)
 
-        self.input = Input()
+        self.input = Input(self)
 
         self.keys = {
             "ESCAPE" : sdl2.SDL_SCANCODE_ESCAPE,
@@ -110,6 +124,10 @@ class Window:
             if "on_quit" in self.functions:
                 self.functions["on_quit"]()
 
+        for script in self.scripts:
+            if script.enabled:
+                script.update(self, self)
+
         for layer in dict(sorted(self.engine.objects.items())):
             for object in self.engine.objects[layer]:
                 if object.destroyed:
@@ -130,7 +148,8 @@ class Window:
         sdl2.SDL_SetRenderDrawColor(self.renderer, self.background_color.r, self.background_color.g, self.background_color.b, self.background_color.a)
         sdl2.SDL_RenderPresent(self.renderer)
 
-        self.update()
+        if self.enabled:
+            self.update()
 
         if "update" in self.functions:
             self.functions["update"]()
@@ -146,8 +165,61 @@ class Window:
                         if object.visible:
                             object.draw()
 
+    def set_fullscreen(self, fullscreen = True):
+        self.fullscreen = fullscreen
+
+        if self.fullscreen:
+            sdl2.SDL_SetWindowFullscreen(self.window, sdl2.SDL_WINDOW_FULLSCREEN)
+
+            if "on_fullscreen_change" in self.functions:
+                self.functions["on_fullscreen_change"](True)
+
+        else:
+            sdl2.SDL_SetWindowFullscreen(self.window, 0)
+
+            if "on_fullscreen_change" in self.functions:
+                self.functions["on_fullscreen_change"](False)
+
+    def set_width(self, width):
+        self.width = width
+        sdl2.SDL_SetWindowSize(self.window, self.width, self.height)
+
+    def set_height(self, height):
+        self.height = height
+        sdl2.SDL_SetWindowSize(self.window, self.width, self.height)
+
+    def set_size(self, width, height):
+        self.width, self.height = width, height
+        sdl2.SDL_SetWindowSize(self.window, self.width, self.height)
+
+    def get_width(self):
+        return self.width
+
+    def get_height(self):
+        return self.height
+
+    def get_size(self):
+        return self.width, self.height
+
+    def get_monitor_width(self):
+        self.monitor_width = self.user32.GetSystemMetrics(0)
+        return self.monitor_width
+
+    def get_monitor_height(self):
+        self.monitor_height = self.user32.GetSystemMetrics(1)
+        return self.monitor_height
+
+    def get_monitor_size(self):
+        self.monitor_width,self.monitor_height = self.user32.GetSystemMetrics(0), self.user32.GetSystemMetrics(1)
+        return self.monitor_width,self.monitor_height
+
+    def set_always_on_top(self, always_on_top = True):
+        self.always_on_top = always_on_top
+        sdl2.SDL_SetWindowAlwaysOnTop(self.window, self.always_on_top)
+
     def destroy(self):
         self.destroyed = True
+        self.enabled = False
 
         sdl2.SDL_DestroyRenderer(self.renderer)
         sdl2.SDL_DestroyWindow(self.window)
@@ -158,6 +230,29 @@ class Window:
 
     def event(self, func):
         self.functions[func.__name__] = func
+
+    def add_script(self, script):
+        self.scripts.append(script)
+
+    def get_script(self, index):
+        return self.scripts[index]
+
+    def remove_script(self, script):
+        self.scripts.pop(self.scripts.index(script))
+
+    def enable(self, scripts = True):
+        if scripts:
+            for script in self.scripts:
+                script.enable()
+
+        self.enabled = True
+
+    def disable(self, scripts = True):
+        if scripts:
+            for script in self.scripts:
+                script.disable()
+
+        self.enabled = False
 
     def update(self):
         pass

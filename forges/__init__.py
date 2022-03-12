@@ -21,3 +21,6 @@ fonts = FontManager(forges).get()
 
 def run():
     forges.run()
+
+def get():
+    return forges

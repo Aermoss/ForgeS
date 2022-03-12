@@ -32,6 +32,9 @@ class Vector2:
     def get(self):
         return (self.x, self.y)
 
+    def copy(self):
+        return Vector2(self.x, self.y)
+
     def __add__(self, value):
         return Vector2(self.x + value.x, self.y + value.y)
 
@@ -59,6 +62,9 @@ class Vector3:
 
     def get(self):
         return (self.x, self.y, self.z)
+
+    def copy(self):
+        return Vector3(self.x, self.y, self.z)
 
     def __add__(self, value):
         return Vector3(self.x + value.x, self.y + value.y, self.z + value.z)

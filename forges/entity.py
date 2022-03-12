@@ -76,6 +76,12 @@ class Entity:
 
     def get_parent(self):
         return self.parent
+
+    def set_pos(self, vector2):
+        self.x, self.y = vector2.x, vector2.y
+
+    def get_pos(self):
+        return Vector2(self.x, self.y)
    
     def get_x(self):
         return self.x

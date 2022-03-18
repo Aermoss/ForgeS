@@ -24,3 +24,7 @@ def run():
 
 def get():
     return forges
+
+def import_sdl2():
+    global sdl2
+    import sdl2

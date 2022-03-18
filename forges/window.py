@@ -155,6 +155,9 @@ class Window:
             self.functions["update"]()
 
     def draw_handler(self):
+        if "on_draw" in self.functions:
+            self.functions["on_draw"]()
+
         for layer in dict(sorted(self.engine.objects.items(), reverse = True)):
             for object in self.engine.objects[layer]:
                 if object.destroyed:
@@ -163,6 +166,9 @@ class Window:
                 else:
                     if hasattr(object, "visible"):
                         if object.visible:
+                            if hasattr(object, "on_draw"):
+                                object.on_draw()
+
                             object.draw()
 
     def set_fullscreen(self, fullscreen = True):

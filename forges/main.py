@@ -10,6 +10,7 @@ class ForgeS:
 
         self.path = self.path = os.path.dirname(os.path.abspath(__file__))
         self.objects = {}
+        self.functions = {}
         self.scripts = []
     
     def set_window(self, window):
@@ -24,6 +25,9 @@ class ForgeS:
         while not self.destroyed:
             while sdl2.SDL_PollEvent(event) != 0:
                 self.window.event_handler(event)
+
+                if "on_event" in self.functions:
+                    self.functions["on_event"](event)
 
             self.window.update_handler()
 
@@ -48,6 +52,9 @@ class ForgeS:
 
     def remove_script(self, script):
         self.scripts.pop(self.scripts.index(script))
+
+    def event(self, func):
+        self.functions[func.__name__] = func
 
     def enable(self, scripts = True):
         if scripts:

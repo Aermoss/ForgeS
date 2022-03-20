@@ -6,6 +6,7 @@ from forges.window import Window
 from forges.input import Input
 from forges.error import ForgeError
 from forges.script import Script
+from forges.object import Object
 from forges.entity import Entity
 from forges.sprite import Sprite
 from forges.text import Text

@@ -1,5 +1,4 @@
-import sdl2
-import sdl2.ext
+import sdl2, sdl2.ext
 
 from forges.color import Color
 from forges.math import Vector2

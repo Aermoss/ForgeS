@@ -1,17 +1,14 @@
 import forges
 
 class PlatformerController(forges.Entity):
-    def __init__(self, *args, **kwargs):
-        super().__init__()
+    def __init__(self, speed = 5, sprint_speed = 10, jumpforce = -13, width = 50, height = 100, x = 0, y = 0, color = forges.color.Color(6, 6, 8), fill = True, parent = None, layer = 1):
+        super().__init__(width = width, height = height, x = x, y = y, color = color, fill = fill, parent = parent, layer = layer)
 
         self.window = forges.forges.get_window()
 
-        self.speed = 5
-        self.sprint_speed = 10
-        self.jumpforce = -13
-
-        for i in kwargs:
-            setattr(self, i, kwargs[i])
+        self.speed = speed
+        self.sprint_speed = sprint_speed
+        self.jumpforce = jumpforce
 
         self.target_speed = self.speed
         self.add_script(forges.scripts.Gravity())

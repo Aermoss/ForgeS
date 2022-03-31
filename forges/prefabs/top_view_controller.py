@@ -1,16 +1,13 @@
 import forges
 
 class TopViewController(forges.Entity):
-    def __init__(self, *args, **kwargs):
-        super().__init__()
+    def __init__(self, speed = 5, sprint_speed = 10, width = 50, height = 100, x = 0, y = 0, color = forges.color.Color(6, 6, 8), fill = True, parent = None, layer = 1):
+        super().__init__(width = width, height = height, x = x, y = y, color = color, fill = fill, parent = parent, layer = layer)
 
         self.window = forges.forges.get_window()
 
         self.speed = 3
         self.sprint_speed = 6
-
-        for i in kwargs:
-            setattr(self, i, kwargs[i])
 
         self.target_speed = self.speed
 

@@ -3,10 +3,10 @@ class Color:
         self.r, self.g, self.b, self.a = r, g, b, a
 
     def get(self):
-        return (self.r, self.g, self.b, self.a)
+        return (int(self.r), int(self.g), int(self.b), int(self.a))
 
     def __repr__(self):
-        return "Color" + str((self.r, self.g, self.b, self.a))
+        return "Color" + str(self.get())
         
 Red = Color(240, 0, 0)
 Green = Color(0, 240, 0)

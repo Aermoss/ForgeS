@@ -6,7 +6,7 @@ from forges.math import Vector2
 import __main__
 
 class Entity:
-    def __init__(self, width = 100, height = 100, x = 0, y = 0, color = Color(240, 240, 240), fill = True, parent = None, layer = 1):
+    def __init__(self, width = 100, height = 100, x = 0, y = 0, color = Color(6, 6, 8), fill = True, parent = None, layer = 1):
         if hasattr(__main__.forges, "forges"):
             self.engine = __main__.forges.forges
 
@@ -22,6 +22,11 @@ class Entity:
 
         self.parent = parent
 
+        if self.parent != None:
+            self.set_parent(parent)
+
+        self.offset = Vector2(0, 0)
+
         self.width = width
         self.height = height
 
@@ -36,8 +41,9 @@ class Entity:
         self.enabled = True
 
         self.scripts = []
+        self.childs = []
 
-        self.rect = sdl2.SDL_FRect(self.x, self.y, self.width, self.height)
+        self.rect = sdl2.SDL_Rect(int(self.x), int(self.y), int(self.width), int(self.height))
 
     def update(self):
         pass
@@ -46,23 +52,30 @@ class Entity:
         if not self.destroyed:
             if self.visible:
                 if self.parent != None:
-                    self.x += self.parent.x
-                    self.y += self.parent.y
+                    if hasattr(self.parent, "x") and hasattr(self.parent, "y"):
+                        self.offset.x += self.parent.x
+                        self.offset.y += self.parent.y
+
+                self.x += self.offset.x
+                self.y += self.offset.y
+
+                self.rect.x, self.rect.y, self.rect.w, self.rect.h = int(self.x), int(self.y), int(self.width), int(self.height)
 
                 sdl2.SDL_SetRenderDrawColor(self.engine.window.renderer, self.color.r, self.color.g, self.color.b, self.color.a)
 
-                self.rect = sdl2.SDL_FRect(self.x, self.y, self.width, self.height)
-
-                sdl2.SDL_RenderDrawRectF(self.engine.window.renderer, self.rect)
-
                 if self.fill:
-                    sdl2.SDL_RenderFillRectF(self.engine.window.renderer, self.rect)
+                    sdl2.SDL_RenderFillRect(self.engine.window.renderer, self.rect)
 
-                self.rect = sdl2.SDL_FRect(self.x, self.y, self.width, self.height)
+                else:
+                    sdl2.SDL_RenderDrawRect(self.engine.window.renderer, self.rect)
+
+                self.x -= self.offset.x
+                self.y -= self.offset.y
 
                 if self.parent != None:
-                    self.x -= self.parent.x
-                    self.y -= self.parent.y
+                    if hasattr(self.parent, "x") and hasattr(self.parent, "y"):
+                        self.offset.x -= self.parent.x
+                        self.offset.y -= self.parent.y
 
     def set_color(self, color):
         self.color = color
@@ -72,9 +85,19 @@ class Entity:
 
     def set_parent(self, parent):
         self.parent = parent
+        self.parent.add_child(self)
 
     def get_parent(self):
         return self.parent
+
+    def add_child(self, child):
+        self.childs.append(child)
+
+    def remove_child(self, child):
+        self.childs.pop(self.childs.index(child))
+
+    def get_childs(self):
+        return self.childs
 
     def set_pos(self, vector2):
         self.x, self.y = vector2.x, vector2.y
@@ -121,6 +144,10 @@ class Entity:
 
     def hit(self, entity):
         if not self.destroyed:
+            for i in self.childs:
+                if i.hit(entity):
+                    return True
+
             if isinstance(entity, Vector2):
                 left, top, right, bottom = self.rect.x, self.rect.y, self.rect.x + self.rect.w, self.rect.y + self.rect.h
                 bleft, btop, bright, bbottom = entity.x, entity.y, entity.x, entity.y
@@ -158,6 +185,9 @@ class Entity:
             return ""
 
     def destroy(self):
+        for i in self.childs:
+            i.destroy()
+
         self.destroyed = True
         self.engine.objects[self.layer].pop(self.engine.objects[self.layer].index(self))
 
@@ -171,6 +201,9 @@ class Entity:
         self.scripts.pop(self.scripts.index(script))
 
     def enable(self, scripts = True):
+        for i in self.childs:
+            i.enable()
+
         if scripts:
             for script in self.scripts:
                 script.enable()
@@ -178,6 +211,9 @@ class Entity:
         self.enabled = True
 
     def disable(self, scripts = True):
+        for i in self.childs:
+            i.disable()
+            
         if scripts:
             for script in self.scripts:
                 script.disable()

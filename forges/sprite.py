@@ -1,14 +1,13 @@
-import sdl2
-import sdl2.ext
+import sdl2, sdl2.ext
 
-import ctypes
+import ctypes, math
 
 from forges.math import Vector2
 
 import __main__
 
 class Sprite:
-    def __init__(self, file, width = 100, height = 100, x = 0, y = 0, alpha = 255, parent = None, layer = 1):
+    def __init__(self, file, width = 100, height = 100, x = 0, y = 0, angle = 0, alpha = 255, parent = None, layer = 1):
         if hasattr(__main__.forges, "forges"):
             self.engine = __main__.forges.forges
 
@@ -24,52 +23,97 @@ class Sprite:
 
         self.parent = parent
 
+        if self.parent != None:
+            self.set_parent(parent)
+
+        self.offset = Vector2(0, 0)
+
         self.width = width
         self.height = height
 
         self.x = x
         self.y = y
 
-        self.alpha = alpha
+        self.angle = angle
 
+        self.alpha = alpha
         self.file = file
 
         self.scripts = []
+        self.childs = []
 
         self.destroyed = False
         self.visible = True
         self.enabled = True
 
-        self.image = sdl2.sdlimage.IMG_LoadTexture(self.engine.window.renderer, self.file.encode())
-        sdl2.SDL_SetTextureAlphaMod(self.image, alpha)
-        sdl2.SDL_QueryTexture(self.image, None, None, ctypes.c_int(self.width), ctypes.c_int(self.height))
-        self.rect = sdl2.SDL_FRect(self.x, self.y, self.width * 2, self.height * 2)
+        self.rect = sdl2.SDL_Rect(int(self.x), int(self.y), int(self.width), int(self.height))
+
+        self.render()
 
     def update(self):
         pass
+
+    def render(self):
+        self.texture = sdl2.sdlimage.IMG_LoadTexture(self.engine.window.renderer, self.file.encode())
+        sdl2.SDL_SetTextureAlphaMod(self.texture, self.alpha)
+        sdl2.SDL_QueryTexture(self.texture, None, None, ctypes.c_int(self.width), ctypes.c_int(self.height))
+        self.rect = sdl2.SDL_Rect(int(self.x), int(self.y), int(self.width), int(self.height))
+        self.rendered_file = self.file
 
     def draw(self):
         if not self.destroyed:
             if self.visible:
                 if self.parent != None:
-                    self.x += self.parent.x
-                    self.y += self.parent.y
+                    if hasattr(self.parent, "x") and hasattr(self.parent, "y"):
+                        self.offset.x += self.parent.x
+                        self.offset.y += self.parent.y
 
-                self.rect = sdl2.SDL_FRect(self.x, self.y, self.width, self.height)
+                    if hasattr(self.parent, "angle"):
+                        self.angle = self.parent.angle
+
+                self.x += self.offset.x
+                self.y += self.offset.y
+
+                if self.rendered_file != self.file:
+                    self.render()
+
+                if self.angle >= 360:
+                    self.angle -= 360
+
+                if self.angle <= -360:
+                    self.angle += 360
+
+                self.rect.x, self.rect.y, self.rect.w, self.rect.h = int(self.x), int(self.y), int(self.width), int(self.height)
                 
-                sdl2.SDL_RenderCopyF(self.engine.window.renderer, self.image, None, self.rect)
+                sdl2.SDL_RenderCopyEx(self.engine.window.renderer, self.texture, None, self.rect, self.angle, sdl2.SDL_Point(int(self.width / 2), int(self.height / 2)), sdl2.SDL_FLIP_NONE)
 
-                self.rect = sdl2.SDL_FRect(self.x, self.y, self.width, self.height)
+                self.x -= self.offset.x
+                self.y -= self.offset.y
 
                 if self.parent != None:
-                    self.x -= self.parent.x
-                    self.y -= self.parent.y
+                    if hasattr(self.parent, "x") and hasattr(self.parent, "y"):
+                        self.offset.x -= self.parent.x
+                        self.offset.y -= self.parent.y
 
     def load_image(self, file):
         self.file = file
-        self.image = sdl2.sdlimage.IMG_LoadTexture(self.engine.window.renderer, self.file.encode())
-        sdl2.SDL_SetTextureAlphaMod(self.image, self.alpha)
-        sdl2.SDL_QueryTexture(self.image, None, None, ctypes.c_int(self.width), ctypes.c_int(self.height))
+        self.render()
+
+    def set_parent(self, parent):
+        self.parent = parent
+        self.parent.add_child(self)
+
+    def get_parent(self):
+        return self.parent
+
+    def add_child(self, child):
+        self.childs.append(child)
+
+    def remove_child(self, child):
+        self.childs.pop(self.childs.index(child))
+
+    def get_childs(self):
+        return self.childs
 
     def get_alpha(self):
         return self.alpha
@@ -78,16 +122,13 @@ class Sprite:
         if alpha > 0:
             self.alpha = alpha
 
+        elif alpha > 255:
+            self.alpha = 255
+
         else:
             self.alpha = 0
             
-        sdl2.SDL_SetTextureAlphaMod(self.image, int(self.alpha))
-
-    def set_parent(self, parent):
-        self.parent = parent
-
-    def get_parent(self):
-        return self.parent
+        sdl2.SDL_SetTextureAlphaMod(self.texture, int(self.alpha))
 
     def set_pos(self, vector2):
         self.x, self.y = vector2.x, vector2.y
@@ -107,6 +148,12 @@ class Sprite:
     def set_y(self, y):
         self.y = y
 
+    def set_angle(self, angle):
+        self.angle = angle
+
+    def get_angle(self):
+        return self.angle
+
     def get_width(self):
         return self.width
 
@@ -121,13 +168,13 @@ class Sprite:
 
     def hit(self, entity):
         if not self.destroyed:
+            for i in self.childs:
+                if i.hit(entity):
+                    return True
+
             if isinstance(entity, Vector2):
                 left, top, right, bottom = self.rect.x, self.rect.y, self.rect.x + self.rect.w, self.rect.y + self.rect.h
                 bleft, btop, bright, bbottom = entity.x, entity.y, entity.x, entity.y
-
-            elif isinstance(entity, tuple):
-                left, top, right, bottom = self.rect.x, self.rect.y, self.rect.x + self.rect.w, self.rect.y + self.rect.h
-                bleft, btop, bright, bbottom = entity[0], entity[1], entity[0], entity[1]
 
             else:
                 left, top, right, bottom = self.rect.x, self.rect.y, self.rect.x + self.rect.w, self.rect.y + self.rect.h
@@ -137,11 +184,33 @@ class Sprite:
 
         else:
             return False
+
+    def hit2(self, entity, collision_tolreance = 10):
+        if self.hit(entity):
+            left, top, right, bottom = self.rect.x, self.rect.y, self.rect.x + self.rect.w, self.rect.y + self.rect.h
+            bleft, btop, bright, bbottom = entity.rect.x, entity.rect.y, entity.rect.x + entity.rect.w, entity.rect.y + entity.rect.h
+
+            if abs(btop - bottom) < collision_tolreance:
+                return "bottom"
+
+            elif abs(bbottom - top) < collision_tolreance:
+                return "top"
+
+            elif abs(bright - left) < collision_tolreance:
+                return "left"
+
+            elif abs(bleft - right) < collision_tolreance:
+                return "right"
+
+            else:
+                return "unknown"
+        
+        else:
+            return ""
     
     def center(self):
         if not self.destroyed:
-            self.x = self.engine.window.width / 2 - self.width / 2
-            self.y = self.engine.window.height / 2 - self.height / 2
+            self.x, self.y = self.engine.window.width / 2 - self.width / 2, self.engine.window.height / 2 - self.height / 2
 
     def center_x(self):
         if not self.destroyed:
@@ -152,6 +221,9 @@ class Sprite:
             self.y = self.engine.window.height / 2 - self.height / 2
 
     def destroy(self):
+        for i in self.childs:
+            i.destroy()
+
         self.destroyed = True
         self.engine.objects[self.layer].pop(self.engine.objects[self.layer].index(self))
 
@@ -165,6 +237,9 @@ class Sprite:
         self.scripts.pop(self.scripts.index(script))
 
     def enable(self, scripts = True):
+        for i in self.childs:
+            i.enable()
+
         if scripts:
             for script in self.scripts:
                 script.enable()
@@ -172,6 +247,9 @@ class Sprite:
         self.enabled = True
 
     def disable(self, scripts = True):
+        for i in self.childs:
+            i.diasble()
+
         if scripts:
             for script in self.scripts:
                 script.disable()

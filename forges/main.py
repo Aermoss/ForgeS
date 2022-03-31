@@ -3,15 +3,21 @@ import sdl2
 import os
 
 class ForgeS:
-    def __init__(self):
+    def __init__(self, parent = None):
         self.window = None
         self.destroyed = False
         self.enabled = True
+
+        self.parent = parent
+
+        if self.parent != None:
+            self.set_parent(parent)
 
         self.path = self.path = os.path.dirname(os.path.abspath(__file__))
         self.objects = {}
         self.functions = {}
         self.scripts = []
+        self.childs = []
     
     def set_window(self, window):
         self.window = window
@@ -39,6 +45,9 @@ class ForgeS:
                     script.update(self.window, self)
 
     def destroy(self):
+        for i in self.childs:
+            i.destroy()
+
         self.destroyed = True
 
     def bound(self, func):
@@ -57,6 +66,9 @@ class ForgeS:
         self.functions[func.__name__] = func
 
     def enable(self, scripts = True):
+        for i in self.childs:
+            i.enable()
+
         if scripts:
             for script in self.scripts:
                 script.enable()
@@ -64,6 +76,9 @@ class ForgeS:
         self.enabled = True
 
     def disable(self, scripts = True):
+        for i in self.childs:
+            i.disable()
+
         if scripts:
             for script in self.scripts:
                 script.disable()

@@ -1,16 +1,12 @@
 import forges
 
 class Button(forges.Entity):
-    def __init__(self, *args, **kwargs):
-        super().__init__()
+    def __init__(self, normal_color = forges.color.Color(200, 200, 200), press_color = forges.color.Color(100, 100, 100), highlight_color = forges.color.Color(150, 150, 150), width = 100, height = 40, x = 0, y = 0, color = forges.color.Color(6, 6, 8), fill = True, parent = None, layer = 1):
+        super().__init__(width = width, height = height, x = x, y = y, color = color, fill = fill, parent = parent, layer = layer)
 
-        self.width, self.height = 100, 40
-        self.normal_color, self.press_color, self.highlight_color = forges.color.Color(200, 200, 200), forges.color.Color(100, 100, 100), forges.color.Color(150, 150, 150)
+        self.normal_color, self.press_color, self.highlight_color = normal_color, press_color, highlight_color
 
         self.color = forges.color.Color(self.normal_color.r, self.normal_color.g, self.normal_color.b, self.normal_color.a)
-
-        for i in kwargs:
-            setattr(self, i, kwargs[i])
 
         self.window = forges.get().get_window()
         self.functions = {}

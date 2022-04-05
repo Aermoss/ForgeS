@@ -61,7 +61,7 @@ class Entity:
 
                 self.rect.x, self.rect.y, self.rect.w, self.rect.h = int(self.x), int(self.y), int(self.width), int(self.height)
 
-                sdl2.SDL_SetRenderDrawColor(self.engine.window.renderer, self.color.r, self.color.g, self.color.b, self.color.a)
+                sdl2.SDL_SetRenderDrawColor(self.engine.window.renderer, int(self.color.r), int(self.color.g), int(self.color.b), int(self.color.a))
 
                 if self.fill:
                     sdl2.SDL_RenderFillRect(self.engine.window.renderer, self.rect)

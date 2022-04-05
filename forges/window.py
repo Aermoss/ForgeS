@@ -4,11 +4,12 @@ import os, ctypes, time
 
 from forges.input import Input
 from forges.color import Color
+from forges.intro import Intro
 
 import __main__
 
 class Window:
-    def __init__(self, width = 1200, height = 600, vsync = True, fullscreen = False, always_on_top = False, background_color = Color(255, 255, 255, 255)):
+    def __init__(self, width = 1200, height = 600, vsync = True, fullscreen = False, always_on_top = False, background_color = Color(255, 255, 255, 255), intro = True):
         if hasattr(__main__.forges, "forges"):
             self.engine = __main__.forges.forges
 
@@ -110,6 +111,12 @@ class Window:
             "MIDDLE": sdl2.SDL_BUTTON_MIDDLE,
         }
 
+        if intro:
+            self.intro = Intro()
+
+        else:
+            self.intro = None
+
     def event_handler(self, event):
         if event.type == sdl2.SDL_QUIT:
             self.destroy()
@@ -185,6 +192,10 @@ class Window:
 
             if "on_fullscreen_change" in self.functions:
                 self.functions["on_fullscreen_change"](False)
+
+    def intro_finished(self):
+        if self.intro == None: return None
+        return True if self.intro.destroyed else False
 
     def set_width(self, width):
         self.width = width

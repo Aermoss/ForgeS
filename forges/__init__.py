@@ -14,6 +14,7 @@ from forges.sprite import Sprite
 from forges.text import Text
 from forges.mixer import Mixer
 from forges.animation import Animation
+from forges.intro import Intro
 
 import forges.prefabs as prefabs
 import forges.scripts as scripts

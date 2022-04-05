@@ -19,11 +19,12 @@ class Camera(forges.Object):
         self.shakes.clear()
 
         for layer in dict(sorted(self.engine.objects.items(), reverse = True)):
-            for object in self.engine.objects[layer]:
-                if object not in self.static_objects:
-                    if hasattr(object, "offset"):
-                        object.offset.x = -self.x
-                        object.offset.y = -self.y
+            if layer > 0:
+                for object in self.engine.objects[layer]:
+                    if object not in self.static_objects:
+                        if hasattr(object, "offset"):
+                            object.offset.x = -self.x
+                            object.offset.y = -self.y
                 
     def shake(self, force = 10, shake_wait = 0.01):
         if self.last_shake + shake_wait < time.time():

@@ -16,10 +16,10 @@ class Sprite:
 
         self.layer = layer
 
-        if self.layer not in self.engine.objects:
-            self.engine.objects[self.layer] = []
+        if self.layer not in self.engine.objects[self.engine.current_window]:
+            self.engine.objects[self.engine.current_window][self.layer] = []
 
-        self.engine.objects[self.layer].append(self)
+        self.engine.objects[self.engine.current_window][self.layer].append(self)
 
         self.parent = parent
 
@@ -54,7 +54,7 @@ class Sprite:
         pass
 
     def render(self):
-        self.texture = sdl2.sdlimage.IMG_LoadTexture(self.engine.window.renderer, self.file.encode())
+        self.texture = sdl2.sdlimage.IMG_LoadTexture(self.engine.current_window.renderer, self.file.encode())
         sdl2.SDL_SetTextureAlphaMod(self.texture, self.alpha)
         sdl2.SDL_QueryTexture(self.texture, None, None, ctypes.c_int(self.width), ctypes.c_int(self.height))
         self.rect = sdl2.SDL_Rect(int(self.x), int(self.y), int(self.width), int(self.height))
@@ -85,7 +85,7 @@ class Sprite:
 
                 self.rect.x, self.rect.y, self.rect.w, self.rect.h = int(self.x), int(self.y), int(self.width), int(self.height)
                 
-                sdl2.SDL_RenderCopyEx(self.engine.window.renderer, self.texture, None, self.rect, self.angle, sdl2.SDL_Point(int(self.width / 2), int(self.height / 2)), sdl2.SDL_FLIP_NONE)
+                sdl2.SDL_RenderCopyEx(self.engine.current_window.renderer, self.texture, None, self.rect, self.angle, sdl2.SDL_Point(int(self.width / 2), int(self.height / 2)), sdl2.SDL_FLIP_NONE)
 
                 self.x -= self.offset.x
                 self.y -= self.offset.y
@@ -210,22 +210,22 @@ class Sprite:
     
     def center(self):
         if not self.destroyed:
-            self.x, self.y = self.engine.window.width / 2 - self.width / 2, self.engine.window.height / 2 - self.height / 2
+            self.x, self.y = self.engine.current_window.width / 2 - self.width / 2, self.engine.current_window.height / 2 - self.height / 2
 
     def center_x(self):
         if not self.destroyed:
-            self.x = self.engine.window.width / 2 - self.width / 2
+            self.x = self.engine.current_window.width / 2 - self.width / 2
 
     def center_y(self):
         if not self.destroyed:
-            self.y = self.engine.window.height / 2 - self.height / 2
+            self.y = self.engine.current_window.height / 2 - self.height / 2
 
     def destroy(self):
         for i in self.childs:
             i.destroy()
 
         self.destroyed = True
-        self.engine.objects[self.layer].pop(self.engine.objects[self.layer].index(self))
+        self.engine.objects[self.engine.current_window][self.layer].pop(self.engine.objects[self.engine.current_window][self.layer].index(self))
 
     def add_script(self, script):
         self.scripts.append(script)

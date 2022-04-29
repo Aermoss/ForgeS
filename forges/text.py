@@ -17,10 +17,10 @@ class Text:
 
         self.layer = layer
 
-        if self.layer not in self.engine.objects:
-            self.engine.objects[self.layer] = []
+        if self.layer not in self.engine.objects[self.engine.current_window]:
+            self.engine.objects[self.engine.current_window][self.layer] = []
 
-        self.engine.objects[self.layer].append(self)
+        self.engine.objects[self.engine.current_window][self.layer].append(self)
 
         sdl2.sdlttf.TTF_Init()
 
@@ -59,7 +59,7 @@ class Text:
     def render(self):
         self.font = sdl2.sdlttf.TTF_OpenFont(self.font_file.encode(), self.font_size)
         self.surface = sdl2.sdlttf.TTF_RenderText_Blended(self.font, self.text.encode(), sdl2.SDL_Color(int(self.color.r), int(self.color.g), int(self.color.b), int(self.color.a)))
-        self.texture = sdl2.SDL_CreateTextureFromSurface(self.engine.window.renderer, self.surface)
+        self.texture = sdl2.SDL_CreateTextureFromSurface(self.engine.current_window.renderer, self.surface)
         self.rendered_text = self.text
         self.rendered_font_size = self.font_size
         self.rendered_font_file = self.font_file
@@ -101,7 +101,7 @@ class Text:
 
                 self.rect.x, self.rect.y = int(self.x), int(self.y)
 
-                sdl2.SDL_RenderCopyEx(self.engine.window.renderer, self.texture, None, self.rect, self.angle, sdl2.SDL_Point(int(self.width / 2), int(self.height / 2)), sdl2.SDL_FLIP_NONE)
+                sdl2.SDL_RenderCopyEx(self.engine.current_window.renderer, self.texture, None, self.rect, self.angle, sdl2.SDL_Point(int(self.width / 2), int(self.height / 2)), sdl2.SDL_FLIP_NONE)
 
                 self.x -= self.offset.x
                 self.y -= self.offset.y
@@ -190,16 +190,16 @@ class Text:
 
     def center(self):
         if not self.destroyed:
-            self.x = self.engine.window.width / 2 - self.width / 2
-            self.y = self.engine.window.height / 2 - self.height / 2
+            self.x = self.engine.current_window.width / 2 - self.width / 2
+            self.y = self.engine.current_window.height / 2 - self.height / 2
 
     def center_x(self):
         if not self.destroyed:
-            self.x = self.engine.window.width / 2 - self.width / 2
+            self.x = self.engine.current_window.width / 2 - self.width / 2
 
     def center_y(self):
         if not self.destroyed:
-            self.y = self.engine.window.height / 2 - self.height / 2
+            self.y = self.engine.current_window.height / 2 - self.height / 2
 
     def hit(self, entity):
         if not self.destroyed:

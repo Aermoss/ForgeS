@@ -12,10 +12,10 @@ class Mixer:
 
         self.layer = layer
 
-        if self.layer not in self.engine.objects:
-            self.engine.objects[self.layer] = []
+        if self.layer not in self.engine.objects[self.engine.current_window]:
+            self.engine.objects[self.engine.current_window][self.layer] = []
 
-        self.engine.objects[self.layer].append(self)
+        self.engine.objects[self.engine.current_window][self.layer].append(self)
 
         self.file = file
         self.volume = volume
@@ -98,7 +98,7 @@ class Mixer:
             
         self.stop()
         self.destroyed = True
-        self.engine.objects[self.layer].pop(self.engine.objects[self.layer].index(self))
+        self.engine.objects[self.engine.current_window][self.layer].pop(self.engine.objects[self.engine.current_window][self.layer].index(self))
 
     def add_script(self, script):
         self.scripts.append(script)

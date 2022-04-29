@@ -15,10 +15,10 @@ class Entity:
 
         self.layer = layer
 
-        if self.layer not in self.engine.objects:
-            self.engine.objects[self.layer] = []
+        if self.layer not in self.engine.objects[self.engine.current_window]:
+            self.engine.objects[self.engine.current_window][self.layer] = []
 
-        self.engine.objects[self.layer].append(self)
+        self.engine.objects[self.engine.current_window][self.layer].append(self)
 
         self.parent = parent
 
@@ -61,13 +61,13 @@ class Entity:
 
                 self.rect.x, self.rect.y, self.rect.w, self.rect.h = int(self.x), int(self.y), int(self.width), int(self.height)
 
-                sdl2.SDL_SetRenderDrawColor(self.engine.window.renderer, int(self.color.r), int(self.color.g), int(self.color.b), int(self.color.a))
+                sdl2.SDL_SetRenderDrawColor(self.engine.current_window.renderer, int(self.color.r), int(self.color.g), int(self.color.b), int(self.color.a))
 
                 if self.fill:
-                    sdl2.SDL_RenderFillRect(self.engine.window.renderer, self.rect)
+                    sdl2.SDL_RenderFillRect(self.engine.current_window.renderer, self.rect)
 
                 else:
-                    sdl2.SDL_RenderDrawRect(self.engine.window.renderer, self.rect)
+                    sdl2.SDL_RenderDrawRect(self.engine.current_window.renderer, self.rect)
 
                 self.x -= self.offset.x
                 self.y -= self.offset.y
@@ -131,16 +131,16 @@ class Entity:
 
     def center(self):
         if not self.destroyed:
-            self.x = self.engine.window.width / 2 - self.width / 2
-            self.y = self.engine.window.height / 2 - self.height / 2
+            self.x = self.engine.current_window.width / 2 - self.width / 2
+            self.y = self.engine.current_window.height / 2 - self.height / 2
 
     def center_x(self):
         if not self.destroyed:
-            self.x = self.engine.window.width / 2 - self.width / 2
+            self.x = self.engine.current_window.width / 2 - self.width / 2
 
     def center_y(self):
         if not self.destroyed:
-            self.y = self.engine.window.height / 2 - self.height / 2
+            self.y = self.engine.current_window.height / 2 - self.height / 2
 
     def hit(self, entity):
         if not self.destroyed:
@@ -189,7 +189,7 @@ class Entity:
             i.destroy()
 
         self.destroyed = True
-        self.engine.objects[self.layer].pop(self.engine.objects[self.layer].index(self))
+        self.engine.objects[self.engine.current_window][self.layer].pop(self.engine.objects[self.engine.current_window][self.layer].index(self))
 
     def add_script(self, script):
         self.scripts.append(script)

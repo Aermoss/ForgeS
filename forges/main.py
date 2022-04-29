@@ -4,7 +4,8 @@ import os
 
 class ForgeS:
     def __init__(self, parent = None):
-        self.window = None
+        self.windows = []
+        self.current_window = None
         self.destroyed = False
         self.enabled = True
 
@@ -19,26 +20,38 @@ class ForgeS:
         self.scripts = []
         self.childs = []
     
-    def set_window(self, window):
-        self.window = window
+    def add_window(self, window):
+        self.windows.append(window)
+        self.current_window = window
+        self.objects[self.current_window] = {}
 
     def get_window(self):
-        return self.window
+        return self.current_window
+
+    def get_windows(self):
+        return self.windows
 
     def run(self):
         event = sdl2.SDL_Event()
 
         while not self.destroyed:
             while sdl2.SDL_PollEvent(event) != 0:
-                self.window.event_handler(event)
+                for i in self.windows:
+                    self.current_window = i
+                    i.event_handler(event)
 
                 if "on_event" in self.functions:
                     self.functions["on_event"](event)
 
-            self.window.update_handler()
+            for i in self.windows:
+                self.current_window = i
+                i.update_handler()
 
             if self.enabled:
                 self.update()
+
+            if len(self.windows) == 0:
+                self.destroy()
 
             for script in self.scripts:
                 if script.enabled:
@@ -49,6 +62,7 @@ class ForgeS:
             i.destroy()
 
         self.destroyed = True
+        sdl2.SDL_Quit()
 
     def bound(self, func):
         setattr(self.__class__, func.__name__, classmethod(func))

@@ -12,10 +12,10 @@ class Object:
 
         self.layer = layer
 
-        if self.layer not in self.engine.objects:
-            self.engine.objects[self.layer] = []
+        if self.layer not in self.engine.objects[self.engine.current_window]:
+            self.engine.objects[self.engine.current_window][self.layer] = []
 
-        self.engine.objects[self.layer].append(self)
+        self.engine.objects[self.engine.current_window][self.layer].append(self)
 
         self.parent = parent
 
@@ -36,7 +36,7 @@ class Object:
             i.destroy()
 
         self.destroyed = True
-        self.engine.objects[self.layer].pop(self.engine.objects[self.layer].index(self))
+        self.engine.objects[self.engine.current_window][self.layer].pop(self.engine.objects[self.engine.current_window][self.layer].index(self))
 
     def set_parent(self, parent):
         self.parent = parent

@@ -9,14 +9,14 @@ from forges.intro import Intro
 import __main__
 
 class Window:
-    def __init__(self, width = 1200, height = 600, vsync = True, fullscreen = False, always_on_top = False, background_color = Color(255, 255, 255, 255), intro = True):
+    def __init__(self, width = 1200, height = 600, vsync = True, fullscreen = False, always_on_top = False, opengl = False, resizable = False, background_color = Color(255, 255, 255, 255), intro = True):
         if hasattr(__main__.forges, "forges"):
             self.engine = __main__.forges.forges
 
         else:
             self.engine = __main__.forges
 
-        self.engine.set_window(self)
+        self.engine.add_window(self)
 
         self.user32 = ctypes.windll.user32
         self.monitor_width,self.monitor_height = self.user32.GetSystemMetrics(0), self.user32.GetSystemMetrics(1)
@@ -27,6 +27,8 @@ class Window:
         self.fullscreen = fullscreen
         self.background_color = background_color
         self.always_on_top = always_on_top
+        self.opengl = opengl
+        self.resizable = resizable
 
         self.start_time = time.time()
         self.destroyed = False
@@ -37,23 +39,21 @@ class Window:
         sdl2.SDL_Init(sdl2.SDL_INIT_EVERYTHING)
 
         window_flags = sdl2.SDL_WINDOW_SHOWN
-
-        if self.fullscreen:
-            window_flags |= sdl2.SDL_WINDOW_FULLSCREEN
-
-        if self.always_on_top:
-            window_flags |= sdl2.SDL_WINDOW_ALWAYS_ON_TOP
+        if self.fullscreen: window_flags |= sdl2.SDL_WINDOW_FULLSCREEN
+        if self.always_on_top: window_flags |= sdl2.SDL_WINDOW_ALWAYS_ON_TOP
+        if self.opengl: window_flags |= sdl2.SDL_WINDOW_OPENGL
+        if self.resizable: window_flags |= sdl2.SDL_WINDOW_RESIZABLE
 
         self.window = sdl2.SDL_CreateWindow("Forge S".encode(), sdl2.SDL_WINDOWPOS_CENTERED, sdl2.SDL_WINDOWPOS_CENTERED, self.width, self.height, window_flags)
-
-        renderer_flags = 0
         
-        if self.vsync:
-            renderer_flags = sdl2.SDL_RENDERER_ACCELERATED | sdl2.SDL_RENDERER_PRESENTVSYNC
-            
-        self.renderer = sdl2.SDL_CreateRenderer(self.window, -1, renderer_flags)
+        if self.opengl: self.context = sdl2.SDL_GL_CreateContext(self.window)
+        else:
+            renderer_flags = 0
+            if self.vsync: renderer_flags = sdl2.SDL_RENDERER_ACCELERATED | sdl2.SDL_RENDERER_PRESENTVSYNC
 
-        sdl2.SDL_SetRenderDrawBlendMode(self.renderer, sdl2.SDL_BLENDMODE_BLEND)
+            self.renderer = sdl2.SDL_CreateRenderer(self.window, -1, renderer_flags)
+
+            sdl2.SDL_SetRenderDrawBlendMode(self.renderer, sdl2.SDL_BLENDMODE_BLEND)
 
         self.path = self.engine.path
 
@@ -111,34 +111,37 @@ class Window:
             "MIDDLE": sdl2.SDL_BUTTON_MIDDLE,
         }
 
-        if intro:
+        if intro and not self.opengl:
             self.intro = Intro()
 
         else:
             self.intro = None
 
     def event_handler(self, event):
-        if event.type == sdl2.SDL_QUIT:
-            self.destroy()
+        if event.type == sdl2.SDL_WINDOWEVENT and event.window.event == sdl2.SDL_WINDOWEVENT_CLOSE:
+            if event.window.windowID == sdl2.SDL_GetWindowID(self.window):
+                self.destroy()
 
         self.input.update(event)
 
     def update_handler(self):
         if self.destroyed:
-            self.engine.destroy()
+            self.destroy()
             self.on_quit()
 
             if "on_quit" in self.functions:
                 self.functions["on_quit"]()
 
+            return
+
         for script in self.scripts:
             if script.enabled:
                 script.update(self, self)
 
-        for layer in dict(sorted(self.engine.objects.items())):
-            for object in self.engine.objects[layer]:
+        for layer in dict(sorted(self.engine.objects[self.engine.current_window].items())):
+            for object in self.engine.objects[self.engine.current_window][layer]:
                 if object.destroyed:
-                    self.engine.objects[layer].pop(self.engine.objects[layer].index(object))
+                    self.engine.objects[self.engine.current_window][layer].pop(self.engine.objects[self.engine.current_window][layer].index(object))
 
                 else:
                     if object.enabled:
@@ -148,12 +151,7 @@ class Window:
                         if script.enabled:
                             script.update(self, object)
 
-        sdl2.SDL_RenderClear(self.renderer)
-
         self.draw_handler()
-
-        sdl2.SDL_SetRenderDrawColor(self.renderer, self.background_color.r, self.background_color.g, self.background_color.b, self.background_color.a)
-        sdl2.SDL_RenderPresent(self.renderer)
 
         if self.enabled:
             self.update()
@@ -165,10 +163,17 @@ class Window:
         if "on_draw" in self.functions:
             self.functions["on_draw"]()
 
-        for layer in dict(sorted(self.engine.objects.items(), reverse = True)):
-            for object in self.engine.objects[layer]:
+        if self.opengl:
+            sdl2.SDL_GL_SwapWindow(self.window)
+            return
+
+        sdl2.SDL_SetRenderDrawColor(self.renderer, self.background_color.r, self.background_color.g, self.background_color.b, self.background_color.a)
+        sdl2.SDL_RenderClear(self.renderer)
+
+        for layer in dict(sorted(self.engine.objects[self.engine.current_window].items(), reverse = True)):
+            for object in self.engine.objects[self.engine.current_window][layer]:
                 if object.destroyed:
-                    self.engine.objects[layer].pop(self.engine.objects[layer].index(object))
+                    self.engine.objects[self.engine.current_window][layer].pop(self.engine.objects[self.engine.current_window][layer].index(object))
 
                 else:
                     if hasattr(object, "visible"):
@@ -177,6 +182,8 @@ class Window:
                                 object.on_draw()
 
                             object.draw()
+
+        sdl2.SDL_RenderPresent(self.renderer)
 
     def set_fullscreen(self, fullscreen = True):
         self.fullscreen = fullscreen
@@ -238,9 +245,13 @@ class Window:
         self.destroyed = True
         self.enabled = False
 
-        sdl2.SDL_DestroyRenderer(self.renderer)
+        self.engine.windows.pop(self.engine.windows.index(self))
+        del self.engine.objects[self]
+        if self.engine.current_window == self: self.engine.current_window = None
+
+        if not self.opengl: sdl2.SDL_DestroyRenderer(self.renderer)
+        else: sdl2.SDL_GL_DeleteContext(self.context)
         sdl2.SDL_DestroyWindow(self.window)
-        sdl2.SDL_Quit()
 
     def bound(self, func):
         setattr(self.__class__, func.__name__, classmethod(func))

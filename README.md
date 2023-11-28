@@ -1,5 +1,5 @@
-# Forge S
-A game engine made with SDL 2.
+# ForgeS[DL] Engine
+A simple 2D game engine written in Python with SDL2.
 
 ## Getting Started
 1) Install Python

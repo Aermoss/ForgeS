@@ -6,7 +6,7 @@ A simple 2D game engine written in Python with SDL2.
 2) Open cmd/terminal and type:
 
 ```
-pip install ForgeS
+pip install forges
 ```
 
 ## Examples

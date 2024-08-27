@@ -33,15 +33,15 @@ class Builder:
                 for j in files:
                     if "forges" == j:
                         state += 1
-                        self.forges_path = i + "\\" + j
+                        self.forges_path = i + "/" + j
 
                     if "sdl2" == j:
                         state += 1
-                        self.sdl2_path = i + "\\" + j
+                        self.sdl2_path = i + "/" + j
 
                     if "sdl2dll" == j:
                         state += 1
-                        self.sdl2dll_path = i + "\\" + j
+                        self.sdl2dll_path = i + "/" + j
                     
                 if state == 3:
                     self.site_packages_path = i

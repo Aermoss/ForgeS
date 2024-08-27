@@ -1,6 +1,6 @@
 import sdl2, sdl2.ext
 
-import os, ctypes, time
+import sys, os, ctypes, time
 
 from forges.input import Input
 from forges.color import Color
@@ -18,8 +18,9 @@ class Window:
 
         self.engine.add_window(self)
 
-        self.user32 = ctypes.windll.user32
-        self.monitor_width,self.monitor_height = self.user32.GetSystemMetrics(0), self.user32.GetSystemMetrics(1)
+        if sys.platform == "win32":
+            self.user32 = ctypes.windll.user32
+            self.monitor_width, self.monitor_height = self.user32.GetSystemMetrics(0), self.user32.GetSystemMetrics(1)
 
         self.width = width
         self.height = height
@@ -57,7 +58,7 @@ class Window:
 
         self.path = self.engine.path
 
-        icon = self.path + "\\assets\\icon\\icon.png"
+        icon = self.path + "/assets/icon/icon.png"
         icon = sdl2.ext.load_image(icon)
         sdl2.SDL_SetWindowIcon(self.window, icon)
 

@@ -5,7 +5,7 @@ with open("README.md", "r", encoding = "UTF-8") as file:
  
 setup(
     name = "forges",
-    version = "0.0.7",
+    version = "0.0.8",
     description = "A game engine made with SDL 2.",
     long_description = long_desc,
     long_description_content_type = "text/markdown",
